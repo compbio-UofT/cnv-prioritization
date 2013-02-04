@@ -40,12 +40,12 @@ Our software will be made freely available at [https://github.com/compbio-UofT/c
     3. Preprocessing
         1. parse\_mania\_by\_weight.py
         2. enst\_to\_go.py
-        3. parsecnvs.py
+        3. parse\_cnvs.py
         4. enst\_to\_hpo.py
         5. dgv\_overlap.py
     4. Main scripts
         1. merge\_cnv\_gene\_go.py
-        2. preprocess\_weka\_similarity\_121006c.py
+        2. preprocess\_weka\_similarity.py
         3. randomize\_for\_weka.py
         4. eval.py
     5. Called by eval.py
@@ -129,19 +129,11 @@ Create from original sources
 ### 3.2.2 CNV data
 #### 3.2.2.1 Dataset 1
 
-Quick download
-
-    wget https://www.dropbox.com/s/a4uc78q8mekcj9r/db180k120227.csv
-    
 Format
 
 	sample_id, array_design, genome_build, gender, phenotype, chr, cytoband, start, stop, size, max_start, max_stop, max_size, num_probes, type, classification, final_classification, inheritance, inheritance_coverage, p_value
 
 #### 3.2.2.2 Dataset 2
-
-Quick download
-
-    wget https://www.dropbox.com/s/qptchg7qvhirnsz/Jan16.csv
 
 Format
 
@@ -202,11 +194,6 @@ Create from original sources
     less idmapping.dat | grep -P "\sENSG\d" > idmapping_filtered_ensg.dat
     enst_to_go.py gene_association.goa_human idmapping_filtered_ensg.dat goslim_mappings.txt > ensg_or_entrez_to_go.txt
 
-#### 3.2.4.3 TODO: Remove this
-
-    touch go_parents.txt
-    touch patient_filter.txt
-
 ### 3.2.5 DGV data
 DGV is used to annoate control regions.
 
@@ -232,7 +219,7 @@ Create from original sources
 ### 3.3.1 Format input data (CNVs)
 
     for f in db180k120227.csv Jan16.csv; do
-        parsecnvs.py                                                       `# parse cnvs` \
+        parse_cnvs.py                                                       `# parse cnvs` \
             ${constants}/${f}                                              `# input file` \
             ${f}                                                           `# source name` \
             "De novo|Likely Clinically Significant|Clinically Significant" `# case list ` \
@@ -301,7 +288,15 @@ Command
     gunzip -c ${out_file}.gz > ${out_file}.out
 
 ### 3.4.3 Calculate similarity scores
-TODO: Test
+Input
+
+	Arff file.
+	
+Output
+
+	Arff file annotated with similarity scores.
+		
+Command
 
     pushd /tmp/
     wget http://compbio.charite.de/hudson/job/hpo.annotations/lastStableBuild/artifact/misc/phenotype_annotation.tab
@@ -310,7 +305,15 @@ TODO: Test
     gzip ${out_file}.out
 
 ### 3.4.4 Annotate CNVs with similarity scores
-~2m
+Input
+
+	Arff file.
+	
+Output
+
+	Arff file annotated with similarity scores.
+		
+Command
 
     weighted_gene_duplication=sim
     file_postfix=${function_number}_${top_x}_${weighted_gene_duplication}
@@ -319,7 +322,7 @@ TODO: Test
     balance=bt_patient
     similarity_rank_cutoff=30
 
-    preprocess_weka_similarity_121006c.py     `# ` \
+    preprocess_weka_similarity.py     `# ` \
         ${constants}/${out_file}.gz           `# ` \
         ${constants}/${out_file}.out.gz       `# ` \
         by_sim                                `# ` \
@@ -328,14 +331,11 @@ TODO: Test
         "${weighted_gene_duplication_full}"   `# ` \
         pluszero                              `# ` \
         ${sim_out_file}                       `# ` \
-        1                                     `# ` \
         ${similarity_rank_cutoff}             `# ` \
         ${balance}
 
 ### 3.4.5 Run Weka
-Create randomized set
-
-Evalulate
+Create randomized sets, run weka then evalulate.
 
     iteration=1
     folds=4
